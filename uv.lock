@@ -197,6 +197,18 @@ wheels = [
 ]
 
 [[package]]
+name = "geonamescache"
+version = "3.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/25/16/250e1be82f1a10581361ddc0d379a37c5660f1818fed780ac42ef6706540/geonamescache-3.0.0.tar.gz", hash = "sha256:6eca4a4ceca134a6827dc36b9a0415428081129ec1d731ea496f63f9e9e450ba", size = 30675196, upload-time = "2025-09-26T19:40:29.002Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5a/49/6a6e14f4e99a29991f3446c4204c4fb28906bc07fc480ec11b0cad03ca43/geonamescache-3.0.0-py3-none-any.whl", hash = "sha256:a6bed16ccd0bcfe6a822541ef8fb3192fe40e14905c2cdef1f51a13232585329", size = 31965646, upload-time = "2025-09-26T19:38:48.063Z" },
+]
+
+[[package]]
 name = "geopy"
 version = "2.4.1"
 source = { registry = "https://pypi.org/simple" }
@@ -227,12 +239,12 @@ wheels = [
 ]
 
 [[package]]
-name = "kafka-python-ng"
-version = "2.2.3"
+name = "kafka-python"
+version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ce/04/1d65bdf3f0103a08710e226b851de4b357ac702f1cadabf6128bab7518a7/kafka_python_ng-2.2.3.tar.gz", hash = "sha256:f79f28e10ade9b5a9860b2ec15b7cc8dc510d5702f5a399430478cff5f93a05a", size = 330644, upload-time = "2024-10-02T16:56:58.639Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/27/5c/d3b6d93ed625d2cb0265e6fe0f507be544f6edde577c1b118f42566389bf/kafka_python-2.3.0.tar.gz", hash = "sha256:de65b596d26b5c894f227c35c7d29a65cea8f8a1c4f0f2b4e3e2ea60d503acc8", size = 358391, upload-time = "2025-11-21T00:47:34.078Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0f/61/22e778f642465a157c449782300d8817ebbc106794a8a7ebe88cbb846b05/kafka_python_ng-2.2.3-py2.py3-none-any.whl", hash = "sha256:adc6e82147c441ca4ae1f22e291fc08efab0d10971cbd4aa1481d2ffa38e9480", size = 232824, upload-time = "2024-10-02T16:56:56.932Z" },
+    { url = "https://files.pythonhosted.org/packages/4a/db/694fd552295ed091e7418d02b6268ee36092d4c93211136c448fe061fe32/kafka_python-2.3.0-py2.py3-none-any.whl", hash = "sha256:831ba6dff28144d0f1145c874d391f3ebb3c2c3e940cc78d74e83f0183497c98", size = 326260, upload-time = "2025-11-21T00:47:32.561Z" },
 ]
 
 [[package]]
@@ -243,8 +255,9 @@ dependencies = [
     { name = "aiokafka" },
     { name = "astral" },
     { name = "fastapi" },
+    { name = "geonamescache" },
     { name = "geopy" },
-    { name = "kafka-python-ng" },
+    { name = "kafka-python" },
     { name = "python-dotenv" },
     { name = "pytz" },
     { name = "requests" },
@@ -257,8 +270,9 @@ requires-dist = [
     { name = "aiokafka", specifier = ">=0.10.0" },
     { name = "astral", specifier = ">=3.2" },
     { name = "fastapi", specifier = ">=0.109.0" },
+    { name = "geonamescache", specifier = ">=3.0.0" },
     { name = "geopy", specifier = ">=2.4.1" },
-    { name = "kafka-python-ng", specifier = ">=2.2.3" },
+    { name = "kafka-python", specifier = ">=2.0.2" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "pytz", specifier = ">=2025.2" },
     { name = "requests", specifier = ">=2.32.5" },

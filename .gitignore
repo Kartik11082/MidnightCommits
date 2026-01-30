@@ -58,7 +58,6 @@ ENV/
 env/
 
 # uv specific
-# Note: uv.lock is usually committed to source control
 .python-version
 
 # mypy
@@ -74,3 +73,33 @@ dmypy.json
 .vscode/
 *.swp
 *.swo
+
+# Node.js / React
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+midnight-commit-ui/build/
+midnight-commit-ui/.env.local
+midnight-commit-ui/.env.development.local
+midnight-commit-ui/.env.test.local
+midnight-commit-ui/.env.production.local
+
+# Docker
+docker-compose.override.yml
+
+# Kafka / Zookeeper data (if mounted locally)
+kafka-data/
+zookeeper-data/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# CSV data files (generated)
+*.csv
