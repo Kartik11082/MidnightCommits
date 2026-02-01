@@ -1,210 +1,220 @@
+
 import Globe from 'react-globe.gl';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import * as THREE from 'three';
-import Dashboard from './Dashboard';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
+import InsightCard from './components/InsightCard';
+import ActivityDonut from './components/charts/ActivityDonut';
+import InnovationBar from './components/charts/InnovationBar';
+import ReleaseTicker from './components/ReleaseTicker';
 import './App.css';
 
 // CONSTANTS
 const MAX_COMMITS = 150;
 const API_BASE = 'http://localhost:8000';
 
-// SHADERS (Monochrome Day/Night)
-const vertexShader = `
-  varying vec2 vUv;
-  varying vec3 vNormal;
-  void main() {
-    vUv = uv;
-    vNormal = normalize(mat3(modelMatrix) * normal);
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-
-const fragmentShader = `
-  uniform sampler2D u_dayTexture;
-  uniform sampler2D u_nightTexture;
-  uniform vec3 u_sunDirection;
-  varying vec2 vUv;
-  varying vec3 vNormal;
-  void main() {
-    // Desaturated texture look for pro feel
-    vec3 dayColor = texture2D(u_dayTexture, vUv).rgb; // grayscale?
-    vec3 nightColor = texture2D(u_nightTexture, vUv).rgb * 0.5; // Dimmer night
-    
-    float cosAngle = dot(vNormal, u_sunDirection);
-    float mixAmount = 1.0 / (1.0 + exp(-10.0 * cosAngle));
-    
-    vec3 color = mix(nightColor, dayColor, mixAmount);
-    
-    // Very subtle terminator
-    float sunset = smoothstep(-0.1, 0.1, cosAngle) * (1.0 - smoothstep(0.0, 0.2, cosAngle));
-    // White/Blue-ish terminator instead of orange
-    color = mix(color, vec3(0.5, 0.6, 0.8), sunset * 0.3);
-    
-    gl_FragColor = vec4(color, 1.0);
-  }
-`;
-
 function App() {
   const globeRef = useRef();
   const [commits, setCommits] = useState([]);
-  const [status, setStatus] = useState('CONNECTING');
-  const [totals, setTotals] = useState({ total_commits: 0, unique_users: 0, panic_commits: 0 });
-  const materialRef = useRef(null);
+  const [countries, setCountries] = useState({ features: [] });
+  const [sunPos, setSunPos] = useState([]); // Will be set by useEffect
 
-  // --- 1. DATA (Totals) ---
+  // Stats State (Simulated for Demo)
+  const [activityData, setActivityData] = useState([
+    { name: 'Commits', value: 350 },
+    { name: 'New Work', value: 45 },
+    { name: 'Shipped', value: 25 }
+  ]);
+
+  const [innovationData, setInnovationData] = useState([
+    { city: 'San Francisco', commits: 120, newRepos: 25 },
+    { city: 'London', commits: 95, newRepos: 15 },
+    { city: 'Bangalore', commits: 110, newRepos: 20 },
+    { city: 'Berlin', commits: 70, newRepos: 12 },
+    { city: 'New York', commits: 85, newRepos: 10 }
+  ]);
+
+  const [releases, setReleases] = useState([]);
+
+  // --- DATA FETCHING ---
   useEffect(() => {
-    const fetchTotals = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/stats/total`);
-        const json = await res.json();
-        if (!json.error) setTotals(json);
-      } catch (e) { }
-    };
-    fetchTotals();
-    const i = setInterval(fetchTotals, 5000);
-    return () => clearInterval(i);
+    // 1. Country Borders (GeoJSON)
+    fetch('https://raw.githubusercontent.com/vasturiano/react-globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson')
+      .then(res => res.json())
+      .then(setCountries)
+      .catch(err => console.error("Failed to load borders", err));
   }, []);
 
-  // --- 2. GLOBE ---
-  const getSunDirection = useCallback(() => {
+  // --- SUN CALCULATION ---
+  const getSunLocation = useCallback(() => {
     const now = new Date();
     const utcHours = now.getUTCHours() + now.getUTCMinutes() / 60;
-    const sunLng = (utcHours - 12) * 15;
-    const sunLngRad = sunLng * (Math.PI / 180);
+    const sunLng = (12 - utcHours) * 15;
     const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
-    const sunLatRad = 23.44 * Math.sin((2 * Math.PI * (dayOfYear - 81)) / 365) * (Math.PI / 180);
-    return new THREE.Vector3(
-      -Math.cos(sunLatRad) * Math.sin(sunLngRad),
-      Math.sin(sunLatRad),
-      -Math.cos(sunLatRad) * Math.cos(sunLngRad)
-    ).normalize();
-  }, []);
-
-  const globeMaterial = useMemo(() => {
-    const loader = new THREE.TextureLoader();
-    const mat = new THREE.ShaderMaterial({
-      uniforms: {
-        u_dayTexture: { value: loader.load('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg') },
-        u_nightTexture: { value: loader.load('//unpkg.com/three-globe/example/img/earth-night.jpg') },
-        u_sunDirection: { value: new THREE.Vector3(1, 0, 0) }
-      },
-      vertexShader,
-      fragmentShader,
-    });
-    materialRef.current = mat;
-    return mat;
+    const sunLat = 23.44 * Math.sin((2 * Math.PI * (dayOfYear - 81)) / 365);
+    return { lat: sunLat, lng: sunLng, label: "The Sun (Real-time)" };
   }, []);
 
   useEffect(() => {
-    const updateSun = () => {
-      if (materialRef.current) materialRef.current.uniforms.u_sunDirection.value = getSunDirection();
-    };
-    updateSun();
-    const i = setInterval(updateSun, 60000);
+    setSunPos([getSunLocation()]);
+    const i = setInterval(() => setSunPos([getSunLocation()]), 60000);
     return () => clearInterval(i);
-  }, [getSunDirection]);
+  }, [getSunLocation]);
 
-  // --- 3. WS ---
+
+  // --- WEBSOCKET ---
   useEffect(() => {
     let ws;
     const connect = () => {
       ws = new WebSocket("ws://localhost:8000/ws");
-      ws.onopen = () => setStatus('ONLINE');
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
+        const isTag = data.type === 'CreateEvent' && data.ref_type === 'tag';
+        const isDelete = data.type === 'DeleteEvent';
+        const isCreate = data.type === 'CreateEvent';
+
+        // Update Releases Ticker
+        if (isTag) {
+          setReleases(prev => [{
+            repo: data.repo,
+            ref: data.description?.replace('Created ', ''), // e.g. "v1.0"
+            city: data.city,
+            time: new Date().toLocaleTimeString()
+          }, ...prev].slice(0, 10));
+        }
+
+        // Color Logic
+        let color = '#00f3ff'; // Default Push (Cyan)
+        if (isDelete) color = '#ff4444'; // Red
+        else if (isTag) color = '#ffffff'; // White (Release)
+        else if (isCreate) color = '#10B981'; // Green (Branch/Repo)
+
         const newCommit = {
-          id: Date.now() + Math.random(),
+          id: data.id || Date.now() + Math.random(),
           lat: data.lat,
           lng: data.lon,
-          size: 0.1, // Fixed small size
-          color: '#ffffff', // Pure white points
-          label: `${data.user} (${data.city})`,
-          repo: data.repo
+          size: isTag ? 0.6 : (isDelete ? 0.3 : 0.2), // Huge size for Releases
+          color: color,
+          label: `${data.description || data.repo} (${data.city})`
         };
-        setCommits(p => [newCommit, ...p].slice(0, MAX_COMMITS));
+        setCommits(p => {
+          if (p.some(c => c.id === newCommit.id)) return p;
+          return [newCommit, ...p].slice(0, MAX_COMMITS);
+        });
+
+        // Simulate live chart updates
+        if (Math.random() > 0.7) {
+          setActivityData(prev => {
+            const idx = isCreate ? 1 : (isDelete ? 2 : 0);
+            const newData = [...prev];
+            newData[idx] = { ...newData[idx], value: newData[idx].value + 1 };
+            return newData;
+          });
+        }
       };
-      ws.onclose = () => { setStatus('OFFLINE'); setTimeout(connect, 3000); };
+      ws.onclose = () => setTimeout(connect, 3000);
     };
     connect();
     return () => ws && ws.close();
   }, []);
 
   return (
-    <div className="App">
+    <div className="report-layout">
 
-      {/* LAYER 1: The Globe (Background) */}
-      <div className="globe-layer">
+      {/* LEFT: Contextual Visualization */}
+      <div className="globe-container">
         <Globe
           ref={globeRef}
-          globeMaterial={globeMaterial}
-          // Use a plain black background, no stars image
+          globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
+          backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
           backgroundColor="#000000"
-
+          atmosphereColor="#2a2a2a"
+          atmosphereAltitude={0.1}
+          polygonsData={countries.features}
+          polygonCapColor={() => 'rgba(0, 0, 0, 0)'}
+          polygonSideColor={() => 'rgba(0, 0, 0, 0)'}
+          polygonStrokeColor={() => '#444'}
+          polygonAltitude={0.01}
           pointsData={commits}
-          pointAltitude="size"
+          pointAltitude={0.25}
+          pointRadius={0.15}
           pointColor="color"
-          pointRadius={0.12} // Minimal dots
-          pointResolution={8} // Low poly counts are fine
+          pointResolution={16}
           pointLabel="label"
-
-          animateIn={true}
-          atmosphereColor="#111" // Dark atmosphere
-          atmosphereAltitude={0.15}
+          customLayerData={sunPos}
+          customThreeObject={(d) => {
+            const group = new THREE.Group();
+            const geometry = new THREE.SphereGeometry(3, 32, 32);
+            const material = new THREE.MeshBasicMaterial({ color: '#FFD700' });
+            group.add(new THREE.Mesh(geometry, material));
+            const haloGeo = new THREE.SphereGeometry(3.5, 32, 32);
+            const haloMat = new THREE.MeshBasicMaterial({ color: '#FFD700', transparent: true, opacity: 0.3 });
+            group.add(new THREE.Mesh(haloGeo, haloMat));
+            return group;
+          }}
+          customThreeObjectUpdate={(obj, d) => {
+            Object.assign(obj.position, globeRef.current.getCoords(d.lat, d.lng, 2.5));
+          }}
         />
+        <div className="live-status">
+          <span className="status-dot"></span> LIVE INGESTION: {commits.length} BUFFERED EVENTS
+        </div>
       </div>
 
-      {/* LAYER 2: The Minimal UI Overlay */}
-      <div className="dashboard-layout">
+      {/* RIGHT: Data Engineering Report */}
+      <div className="report-column">
 
-        {/* Top Bar */}
-        <div className="top-nav">
-          <div className="minimal-card">
-            <h1>Midnight Commits</h1>
-            <div style={{ display: 'flex', gap: '30px' }}>
-              <div>
-                <div className="stat-value">{totals.total_commits}</div>
-                <div className="stat-label">Total Events</div>
-              </div>
-              <div>
-                <div className="stat-value">{totals.panic_commits}</div>
-                <div className="stat-label">Panic Index</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="minimal-card" style={{ padding: '10px 16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: status === 'ONLINE' ? '#10B981' : '#EF4444', boxShadow: status === 'ONLINE' ? '0 0 8px #10B981' : 'none' }}></div>
-              <span style={{ fontSize: '11px', color: status === 'ONLINE' ? '#10B981' : '#EF4444', fontWeight: 600, letterSpacing: '0.5px' }}>
-                SYSTEM {status}
-              </span>
-            </div>
-          </div>
+        {/* Header */}
+        <div style={{ marginBottom: '60px' }}>
+          <h1 style={{ fontSize: '1.8rem', margin: '0 0 10px 0', letterSpacing: '-0.5px' }}>Midnight Commits</h1>
+          <p style={{ color: '#666', fontSize: '0.9rem', lineHeight: '1.5' }}>
+            Real-time ingestion and analysis of global developer activity.
+            <br />
+            <span style={{ color: '#00f3ff', fontFamily: 'JetBrains Mono', fontSize: '0.8rem' }}>Architecture: Kafka + Postgres + React</span>
+          </p>
         </div>
 
-        {/* Bottom Area */}
-        <div className="bottom-panels">
+        {/* STORY 1: ACTIVITY BREAKDOWN */}
+        <InsightCard
+          title="Throughput Breakdown"
+          description="Global mix of activity: Are people fixing things (Commits), starting new things (Creates), or shipping code (Deletes)?"
+          sqlQuery={`SELECT event_type, COUNT(*) 
+FROM commits 
+GROUP BY event_type; `}
+        >
+          <ActivityDonut data={activityData} />
+        </InsightCard>
 
-          {/* Bottom Left: Live Feed */}
-          <div className="minimal-card" style={{ width: '300px' }}>
-            <h1>Incoming Feed</h1>
-            <div className="feed-list" style={{ maxHeight: '150px', overflowY: 'auto' }}>
-              {commits.slice(0, 10).map((c, i) => (
-                <div key={c.id} className="feed-item">
-                  <div>
-                    <span className="feed-user">{c.label.split('(')[0]}</span>
-                    <span className="feed-repo">{c.repo}</span>
-                  </div>
-                  <span className="feed-loc">{c.label.split('(')[1]?.replace(')', '') || 'Unknown'}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* STORY 2: INNOVATION LEADERBOARD */}
+        <InsightCard
+          title="Innovation Leaderboard"
+          description="Which cities are maintaining legacy code (Push) vs. starting brand new projects (Create Repo)?"
+          sqlQuery={`SELECT
+city,
+  COUNT(*) FILTER(WHERE event_type = 'PushEvent') as commits,
+    COUNT(*) FILTER(WHERE event_type = 'CreateEvent' AND ref_type = 'repository') as new_repos
+FROM commits
+WHERE city IS NOT NULL
+GROUP BY city
+ORDER BY new_repos DESC
+LIMIT 5; `}
+        >
+          <InnovationBar data={innovationData} />
+        </InsightCard>
 
-          {/* Bottom Right: Analytics */}
-          <Dashboard />
+        {/* STORY 3: LIVE RELEASES */}
+        <InsightCard
+          title="🚀 Live Releases (Tags)"
+          description="Real-time feed of software releases (Tags) being shipped to production right now."
+          sqlQuery={`SELECT repo_name, ref_type, city, committed_at
+FROM commits
+WHERE event_type = 'CreateEvent' AND ref_type = 'tag'
+ORDER BY committed_at DESC
+LIMIT 10; `}
+        >
+          <ReleaseTicker releases={releases} />
+        </InsightCard>
 
-        </div>
       </div>
     </div>
   );

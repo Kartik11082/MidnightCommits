@@ -1,156 +1,178 @@
 /* 1. Reset & Typography */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap');
 
 body {
   margin: 0;
-  background-color: #000;
-  /* Pure Black */
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: #050505; /* Deep Black */
+  font-family: 'Inter', sans-serif;
   color: #e5e5e5;
-  /* Off-white for better readability */
   overflow: hidden;
 }
 
-/* 2. Layout Container */
-.dashboard-layout {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
+/* 2. Layout Grid */
+.report-layout {
+  display: grid;
+  grid-template-columns: 1fr 450px; /* Globe takes remaining space, Report takes 450px */
   height: 100vh;
-  pointer-events: none;
-  padding: 24px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  z-index: 10;
+  overflow: hidden;
 }
 
-/* 3. The Minimal Card (Used for everything) */
-.minimal-card {
-  background: rgba(10, 10, 10, 0.85);
-  /* Deep dark, slightly transparent */
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  /* Subtle hairline border */
+/* The Globe Container (Fixed on Left) */
+.globe-container {
+  position: relative;
+  background: #000;
+  overflow: hidden;
+}
+
+/* The Scrolling Report (Right Side) */
+.report-column {
+  background: #0a0a0a;
+  border-left: 1px solid #222;
+  overflow-y: auto; /* Enable scrolling */
+  padding: 40px;
+  box-sizing: border-box;
+}
+
+/* Insight Card Styling */
+.insight-card {
+  background: #111;
+  border: 1px solid #222;
   border-radius: 8px;
-  /* Small radius, not rounded bubbles */
-  padding: 16px;
-  pointer-events: auto;
-  backdrop-filter: blur(4px);
-  /* Very subtle blur */
-  max-width: 320px;
+  margin-bottom: 40px; /* Spacing between stories */
+  padding: 24px;
   transition: border-color 0.2s;
 }
 
-.minimal-card:hover {
-  border-color: rgba(255, 255, 255, 0.2);
+.insight-card:hover {
+  border-color: #333;
 }
 
-/* 4. Text Styles */
-h1 {
-  font-size: 11px;
+.insight-card h3 {
+  color: #fff;
+  font-size: 1.1rem;
   font-weight: 600;
-  color: #888;
-  /* Muted gray for labels */
-  text-transform: uppercase;
-  letter-spacing: 1px;
   margin: 0 0 12px 0;
+  border-left: 3px solid #00f3ff; /* Accent color */
+  padding-left: 12px;
+  line-height: 1.2;
 }
 
-.stat-value {
-  font-size: 24px;
-  font-weight: 600;
-  color: #fff;
-  letter-spacing: -0.5px;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: #666;
-  margin-top: 4px;
-}
-
-/* 5. Specific Widget Positioning */
-.top-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  width: 100%;
-}
-
-.bottom-panels {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  width: 100%;
-}
-
-/* 6. Feed Item (Clean Lines) */
-.feed-item {
-  font-size: 12px;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  display: flex;
-  justify-content: space-between;
-}
-
-.feed-item:last-child {
-  border-bottom: none;
-}
-
-.feed-user {
-  color: #fff;
-  font-weight: 500;
-}
-
-.feed-loc {
+.insight-card p {
   color: #888;
-  text-align: right;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 24px;
 }
 
-.feed-repo {
-  color: #444;
-  font-size: 10px;
-  margin-left: 8px;
+/* Visualization Container inside Card */
+.card-viz {
+  margin-bottom: 20px;
+  min-height: 100px;
 }
 
-/* Scrollbar for feed */
-.feed-list::-webkit-scrollbar {
-  width: 4px;
+/* The "Recruiter Bait" Code Section */
+.tech-footer {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #1a1a1a;
 }
 
-.feed-list::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 2px;
-}
-
-/* Globe Layer */
-.globe-layer {
-  position: fixed;
-  top: 0;
-  left: 0;
+.tech-toggle {
+  background: transparent;
+  border: 1px dashed #333;
+  border-radius: 4px;
+  color: #666;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  padding: 8px 12px;
+  cursor: pointer;
   width: 100%;
-  height: 100%;
-  z-index: 0;
-  background: #000;
+  text-align: left;
+  transition: all 0.2s;
 }
 
-/* Panic Indicator */
-.panic-dot {
+.tech-toggle:hover {
+  border-color: #00f3ff;
+  color: #00f3ff;
+  background: rgba(0, 243, 255, 0.05);
+}
+
+.code-block {
+  background: #000;
+  padding: 16px;
+  margin-top: 12px;
+  border-radius: 6px;
+  border: 1px solid #222;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: #a5d6ff; /* Soft code blue */
+  overflow-x: auto;
+  line-height: 1.5;
+}
+
+.code-section { margin-bottom: 16px; }
+.code-section span { display: block; color: #555; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.5px; }
+.code-section pre { margin: 0; white-space: pre-wrap; color: #e5e5e5; }
+.code-section code { color: #00ff88; } 
+
+.pipeline-note { 
+  color: #444; 
+  font-style: italic; 
+  border-top: 1px solid #222; 
+  padding-top: 12px;
+  font-size: 0.7rem;
+}
+
+/* Live Feed Overlay (Inside Globe) */
+.live-status {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  background: rgba(0,0,0,0.8);
+  border: 1px solid #333;
+  padding: 8px 12px;
+  border-radius: 20px;
+  color: #888;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.status-dot {
   width: 6px;
   height: 6px;
-  background: #ff4444;
+  background: #00f3ff;
   border-radius: 50%;
-  display: inline-block;
-  margin-right: 6px;
+  box-shadow: 0 0 8px #00f3ff;
+  animation: pulse 2s infinite;
 }
 
-/* Recharts Overrides */
-.recharts-bar-rectangle {
-  transition: opacity 0.2s;
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
 }
 
-.recharts-bar-rectangle:hover {
-  opacity: 0.8;
+/* Scrollbar for Report Column */
+.report-column::-webkit-scrollbar {
+  width: 6px;
+}
+.report-column::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+.report-column::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+.report-column::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}
+
+/* Recharts Overrides for Dark Mode */
+.recharts-tooltip-layout {
+  background-color: #000 !important;
+  border: 1px solid #333 !important;
 }

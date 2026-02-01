@@ -37,6 +37,28 @@ def main():
     conn = get_db_connection()
     cursor = conn.cursor()
 
+    # Ensure table exists
+    print("🛠️ Checking DB Schema...")
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS commits (
+            id BIGINT PRIMARY KEY,
+            github_user VARCHAR(255),
+            repo_name VARCHAR(255),
+            city VARCHAR(255),
+            latitude FLOAT,
+            longitude FLOAT,
+            status VARCHAR(50),
+            message_length INT,
+            is_panic BOOLEAN,
+            committed_at TIMESTAMP,
+            event_type VARCHAR(50),
+            ref_type VARCHAR(50),
+            description TEXT
+        );
+    """)
+    conn.commit()
+    print("✅ Table 'commits' ready.")
+
     try:
         for msg in consumer:
             data = msg.value
@@ -45,11 +67,14 @@ def main():
                 cursor.execute(
                     """
                     INSERT INTO commits 
-                    (github_user, repo_name, city, latitude, longitude, 
-                     status, message_length, is_panic, committed_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    (id, github_user, repo_name, city, latitude, longitude, 
+                     status, message_length, is_panic, committed_at,
+                     event_type, ref_type, description)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (id) DO NOTHING
                 """,
                     (
+                        data.get("id"),
                         data.get("user"),
                         data.get("repo"),
                         data.get("city"),
@@ -59,6 +84,9 @@ def main():
                         data.get("message_length", 0),
                         data.get("is_panic", False),
                         data.get("timestamp"),
+                        data.get("type", "PushEvent"),
+                        data.get("ref_type"),
+                        data.get("description", ""),
                     ),
                 )
                 conn.commit()
