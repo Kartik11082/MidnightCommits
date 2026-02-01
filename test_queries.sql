@@ -1,0 +1,1 @@
+Select * from commits GROUP BY github_user;
