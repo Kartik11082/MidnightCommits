@@ -24,6 +24,9 @@ TOPIC_NAME = "midnight-commits"
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 HEADERS = {"Authorization": f"token {GITHUB_TOKEN}"}
 
+# Constants
+STALE_EVENT_THRESHOLD = 10000  # seconds
+
 # --- SETUP ---
 producer = KafkaProducer(
     bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
@@ -243,31 +246,65 @@ def main():
 
             for event in events:
                 if event["type"] == "PushEvent":
+                    # Freshness filter: drop events older than 5 minutes
+                    created_at = datetime.datetime.strptime(
+                        event["created_at"], "%Y-%m-%dT%H:%M:%SZ"
+                    )
+                    created_at = created_at.replace(tzinfo=datetime.timezone.utc)
+                    now = datetime.datetime.now(datetime.timezone.utc)
+                    age = (now - created_at).total_seconds()
+
+                    # if age > 300:  # 5 minutes
+                    if age > STALE_EVENT_THRESHOLD:  # 10000 seconds
+                        print(f"🗑️ Dropped stale event ({int(age)}s old)")
+                        continue
+
                     username = event["actor"]["login"]
+                    repo_name = event["repo"]["name"]
                     loc_str = get_user_location(username)
 
                     if loc_str:
                         location = geocode_location(loc_str)
                         if location:
-                            event_time = datetime.datetime.strptime(
-                                event["created_at"], "%Y-%m-%dT%H:%M:%SZ"
-                            )
                             status = get_day_night_status(
-                                location.latitude, location.longitude, event_time
+                                location.latitude, location.longitude, created_at
+                            )
+
+                            # Extract commit message info
+                            commits = event["payload"].get("commits", [])
+                            commit_msg = commits[0]["message"] if commits else ""
+                            message_length = len(commit_msg)
+                            is_panic = any(
+                                word in commit_msg.lower()
+                                for word in [
+                                    "fix",
+                                    "bug",
+                                    "urgent",
+                                    "hotfix",
+                                    "critical",
+                                    "broken",
+                                ]
                             )
 
                             payload = {
                                 "user": username,
+                                "repo": repo_name,
                                 "lat": location.latitude,
                                 "lon": location.longitude,
                                 "status": status,
                                 "city": loc_str,
+                                "message_length": message_length,
+                                "is_panic": is_panic,
                                 "timestamp": event["created_at"],
                             }
 
                             producer.send(TOPIC_NAME, value=payload)
-                            emoji = "☀️" if status == "DAY" else "🌙"
-                            print(f"{emoji} Sent: {username} in {loc_str}")
+                            emoji = (
+                                "🔥" if is_panic else ("☀️" if status == "DAY" else "🌙")
+                            )
+                            print(
+                                f"{emoji} Sent: {username} in {loc_str} ({repo_name})"
+                            )
 
             producer.flush()
             print("💤 Sleeping 5s before next fetch...")

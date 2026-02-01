@@ -1,0 +1,125 @@
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 24px;
+}
+
+.chart-card {
+    background: rgba(15, 15, 35, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 24px;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.chart-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(0, 255, 255, 0.3);
+}
+
+.question {
+    color: #00FFFF;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    opacity: 0.9;
+}
+
+.chart-card h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #fff;
+}
+
+.stats-card {
+    grid-column: 1 / -1;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.stat-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: transform 0.2s;
+}
+
+.stat-item:hover {
+    transform: scale(1.02);
+}
+
+.stat-item.panic {
+    border-color: rgba(255, 107, 53, 0.3);
+}
+
+.stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #00FFFF;
+    margin-bottom: 8px;
+}
+
+.stat-item.panic .stat-value {
+    color: #FF6B35;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.no-data {
+    text-align: center;
+    color: #666;
+    font-size: 0.9rem;
+    padding: 40px 0;
+}
+
+.panic-chart {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.panic-legend {
+    display: flex;
+    gap: 20px;
+    margin-top: 12px;
+    font-size: 0.85rem;
+}
+
+.panic-legend .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+}
+
+.panic-legend .dot.normal {
+    background: #4CAF50;
+}
+
+.panic-legend .dot.panic {
+    background: #FF6B35;
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
